@@ -27,8 +27,7 @@ public class Jeopardy {
 		}
 		return word.substring(l, index);
 	}
-	
-	
+
 	// Read in the file
 	public void readFile(String filename){
 		try{
@@ -38,7 +37,6 @@ public class Jeopardy {
 			line = bf.readLine();
 			int[] pointValues = new int[5];
 			boolean FJ = false;
-			
 			
 			// Read the first line
 			int index = 0;
@@ -72,11 +70,7 @@ public class Jeopardy {
 			cat4 = new Category(categories[3]);
 			cat5 = new Category(categories[4]);
 			cat6 = new Category("FJ");
-			// Add FJ
-			
-			
-			
-			
+
 			// Read the second line
 			line = bf.readLine();
 			//System.out.println(line);
@@ -118,11 +112,11 @@ public class Jeopardy {
 			int colonNumber = 0;
 			Question question = new Question(0, "", "");
 			
-			while((line = bf.readLine()).length() > 0){
+			while((line = bf.readLine())!= null && line.length() != 0){
 				index = 0;
 				// New question, initialize all vars
-				
 				if(line.substring(0,2).equals("::")){
+					// Add the previous question
 					if(question.getPoint() != 0){
 						if(category.equals(cat1.getName())){
 							cat1.addQuestion(question);
@@ -139,6 +133,9 @@ public class Jeopardy {
 						else if(category.equals(cat5.getName())){
 							cat5.addQuestion(question);
 						}
+						else if(category.equals("FJ")){
+							cat6.addQuestion(question);
+						}
 						else{
 							System.out.println("Error: Wrong category name.");
 							System.exit(-1);
@@ -152,7 +149,34 @@ public class Jeopardy {
 					colonNumber = 1;
 					question = new Question(0, "", "");
 				}
-				// FJ
+				
+				// If FJ cont'd
+				else{
+					if(category.equals("FJ")){
+						while(index < line.length()){
+							switch(colonNumber){
+							case 2:
+								q += readWord(line, index);
+								index += readWord(line, index).length();
+								question.setQuestion(q);
+								break;
+							case 3:
+								a += readWord(line, index);
+								index += readWord(line, index).length();
+								question.setAnswer(a);
+								break;
+							default:
+								System.out.println("Error: Format error.");
+								System.exit(-1);
+							}
+							if(colonNumber < 3 && index < line.length()-1 && line.substring(index, index+2).equals("::")){
+								index+=2;
+								colonNumber++;
+							}
+						}
+					}
+				}
+				// FJ starts
 				if(readWord(line, index).equals("FJ")){
 					if(FJ){
 						System.out.println("Error: Multiple final jeopardy questions.");
@@ -162,18 +186,16 @@ public class Jeopardy {
 					point = -100;
 					category = "FJ";
 					index += 4;
-					q += readWord(line, index);
-					
+					colonNumber++;
+					if(index < line.length()-1)
+						q += readWord(line, index);
 					index += q.length();
 					index += 2;
-					a += readWord(line, index);
-					
+					if(index < line.length()-1)
+						a += readWord(line, index);
 					question.setPoint(point);
 					question.setAnswer(a);
 					question.setQuestion(q);
-					cat6.addQuestion(question);
-					
-					continue;
 				}
 				// Other questions
 				else{
@@ -181,7 +203,7 @@ public class Jeopardy {
 						//System.out.println(colonNumber);
 						switch(colonNumber){
 						case 1:
-							category += readWord(line, index);
+							category = category + readWord(line, index);
 							boolean right = false;
 							for(int i = 0; i < 5; i++){
 								if(categories[i].equals(category))
@@ -208,13 +230,12 @@ public class Jeopardy {
 							question.setPoint(point);
 							break;
 						case 3:
-							q += readWord(line, index);
+							q = q + readWord(line, index);
 							index += readWord(line, index).length();
 							question.setQuestion(q);
-							//System.out.println(q);
 							break;
 						case 4:
-							a += readWord(line, index);
+							a = a+ readWord(line, index);
 							index += readWord(line, index).length();
 							question.setAnswer(a);
 							if(index < line.length()){
@@ -227,16 +248,37 @@ public class Jeopardy {
 							System.exit(-1);
 						}
 						
-						if(colonNumber < 4 && line.substring(index, index+2).equals("::")){
+						if(colonNumber < 4 && index < line.length()-1 && line.substring(index, index+2).equals("::")){
 							index += 2;
 							colonNumber++;
 						}
 					}
-					
-					
 				}
-				
 			}
+			// Add the last question
+			if(category.equals(cat1.getName())){
+				cat1.addQuestion(question);
+			}
+			else if(category.equals(cat2.getName())){
+				cat2.addQuestion(question);
+			}
+			else if(category.equals(cat3.getName())){
+				cat3.addQuestion(question);
+			}
+			else if(category.equals(cat4.getName())){
+				cat4.addQuestion(question);
+			}
+			else if(category.equals(cat5.getName())){
+				cat5.addQuestion(question);
+			}
+			else if(category.equals("FJ")){
+				cat6.addQuestion(question);
+			}
+			else{
+				System.out.println("Error: Wrong category name.");
+				System.exit(-1);
+			}
+			
 			mCategories.add(cat1);
 			mCategories.add(cat2);
 			mCategories.add(cat3);
@@ -244,19 +286,7 @@ public class Jeopardy {
 			mCategories.add(cat5);
 			mCategories.add(cat6);
 			
-			
-			// Test output
-			/*for(Category cat: mCategories){
-				for(Question ques : cat.getQuestions()){
-					System.out.println(ques.getPoint());
-					System.out.println(ques.getQuestion());
-					System.out.println(ques.getAnswer());
-				}
-			}
-			*/
-			
 			bf.close();
-		
 		}
 		
 		catch(IOException ioe){
@@ -273,14 +303,7 @@ public class Jeopardy {
 	public static void main(String[] args) throws IOException {
 		Jeopardy j = new Jeopardy();
 		j.readFile(args[0]);
-		for(Category cat : j.getCategories()){
-			System.out.println(cat.getName());
-			for(Question q : cat.getQuestions()){
-				System.out.println(q.getPoint());
-				System.out.println(q.getQuestion());
-				System.out.println(q.getAnswer());
-			}
-		}
+		
 	}
 
 }
