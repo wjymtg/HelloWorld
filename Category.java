@@ -10,6 +10,7 @@ public class Category {
 	// Member functions
 	Category(String name){
 		mName = name;
+		mQuestions = new ArrayList<Question>();
 	}
 	
 	public String getName(){
